@@ -1,4 +1,4 @@
-package agh.ics.msd.lab3;
+package agh.ics.msd.lab4;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -28,7 +28,7 @@ public class GUI extends JPanel implements ActionListener, ChangeListener {
 
     public void initialize(Container container) {
         container.setLayout(new BorderLayout());
-        container.setSize(new Dimension(1024, 768));
+        container.setSize(new Dimension(Config.SIZE_X, Config.SIZE_Y));
 
         JPanel buttonPanel = new JPanel();
 
@@ -46,11 +46,15 @@ public class GUI extends JPanel implements ActionListener, ChangeListener {
         pred.addChangeListener(this);
         pred.setValue(maxDelay - timer.getDelay());
 
+        drawType = new JComboBox<Integer>(Point.types);
+        drawType.addActionListener(this);
+        drawType.setActionCommand("drawType");
         buttonPanel.add(start);
         buttonPanel.add(clear);
+        buttonPanel.add(drawType);
         buttonPanel.add(pred);
 
-        board = new Board(1024, 768 - buttonPanel.getHeight());
+        board = new Board(Config.SIZE_X, Config.SIZE_Y - buttonPanel.getHeight());
         container.add(board, BorderLayout.CENTER);
         container.add(buttonPanel, BorderLayout.SOUTH);
     }

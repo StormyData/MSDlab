@@ -1,4 +1,4 @@
-package agh.ics.msd.lab3;
+package agh.ics.msd.lab4;
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
@@ -9,7 +9,7 @@ import java.awt.event.MouseEvent;
 public class Board extends JComponent implements MouseInputListener, ComponentListener {
     private static final long serialVersionUID = 1L;
     private Point[][] points;
-    private int size = 10;
+    private int size = Config.POINT_SIZE;
     public int editType = 0;
 
     public Board(int length, int height) {
@@ -26,12 +26,31 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
         for (int x = 0; x < points.length; ++x) {
             for (int y = 0; y < points[x].length; ++y) {
                 points[x][y] = new Point();
+                if(y<2 || points[x].length - y < 3)
+                    points[x][y].type = 5;
             }
         }
         for (int x = 0; x < points.length; ++x) {
             for (int y = 0; y < points[x].length; ++y) {
-                for(int i=0;i<=Point.MAX_SPEED;i++)
-                    points[x][y].next[i] = points[(x + 1 + i)%points.length][y];
+                for(int i = 0; i<=Point.MAX_SPEED; i++)
+                {
+                    points[x][y].forwardNeighborhoodCurrentLane[i] = points[(x + 1 + i) % points.length][y];
+                    if(y > 0)
+                    {
+                        points[x][y].forwardNeighborhoodUpperLane[i] = points[(x + 1 + i) % points.length][y - 1];
+                        points[x][y].backwardNeighborhoodUpperLane[i] = points[(x - 1 - i + points.length) % points.length][y - 1];
+                        points[x][y].upperNeighborhood = points[x][y - 1];
+                    }
+                    if(y + 1 < points[x].length)
+                    {
+                        points[x][y].forwardNeighborhoodLowerLane[i] = points[(x + 1 + i) % points.length][y + 1];
+                        points[x][y].backwardNeighborhoodLowerLane[i] = points[(x - 1 - i + points.length) % points.length][y + 1];
+                        points[x][y].lowerNeighborhood = points[x][y + 1];
+                    }
+                    points[x][y].backwardNeighborhoodCurrentLane[i] = points[(x - 1 - i + points.length) % points.length][y];
+
+                }
+
             }
         }
 
@@ -41,7 +60,31 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
         for (int x = 0; x < points.length; ++x) {
             for (int y = 0; y < points[x].length; ++y) {
                 points[x][y].moved = false;
-                points[x][y].update();
+                points[x][y].tryEndOvertake();
+            }
+        }
+
+        for (int x = 0; x < points.length; ++x) {
+            for (int y = 0; y < points[x].length; ++y) {
+                points[x][y].move();
+            }
+        }
+        for (int x = 0; x < points.length; ++x) {
+            for (int y = 0; y < points[x].length; ++y) {
+                points[x][y].moved = false;
+                points[x][y].tryBeginOvertake();
+            }
+        }
+
+        for (int x = 0; x < points.length; ++x) {
+            for (int y = 0; y < points[x].length; ++y) {
+                points[x][y].move();
+            }
+        }
+        for (int x = 0; x < points.length; ++x) {
+            for (int y = 0; y < points[x].length; ++y) {
+                points[x][y].moved = false;
+                points[x][y].doNormalMove();
             }
         }
 
@@ -57,6 +100,8 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
         for (int x = 0; x < points.length; ++x)
             for (int y = 0; y < points[x].length; ++y) {
                 points[x][y].clear();
+                if(y<2 || points[x].length - y < 3)
+                    points[x][y].type = 5;
             }
         this.repaint();
     }
@@ -92,9 +137,16 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
 
         for (x = 0; x < points.length; ++x) {
             for (y = 0; y < points[x].length; ++y) {
-                float a = 1.0F;
-                float rgb = points[x][y].type == 1 ? (float)(Point.MAX_SPEED - points[x][y].speed)/(Point.MAX_SPEED + 1) : 1;
-                g.setColor(new Color(rgb,rgb,rgb,a));
+                Color color = switch (points[x][y].type)
+                {
+                    case 0 -> Color.WHITE;
+                    case 1 -> Color.YELLOW;
+                    case 2 -> Color.BLUE;
+                    case 3 -> Color.RED;
+                    case 5 -> Color.GREEN;
+                    default -> Color.BLACK;
+                };
+                g.setColor(color);
                 //g.setColor(new Color(R, G, B, 0.7f));
 
                 g.fillRect((x * size) + 1, (y * size) + 1, (size - 1), (size - 1));
@@ -107,8 +159,12 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
         int x = e.getX() / size;
         int y = e.getY() / size;
         if ((x < points.length) && (x > 0) && (y < points[x].length) && (y > 0)) {
-            if (editType == 0) {
+            if(editType==0){
                 points[x][y].clicked();
+            }
+            else {
+                points[x][y].type= editType;
+                points[x][y].speed = points[x][y].getMaxSpeed();
             }
             this.repaint();
         }
@@ -126,6 +182,9 @@ public class Board extends JComponent implements MouseInputListener, ComponentLi
         if ((x < points.length) && (x > 0) && (y < points[x].length) && (y > 0)) {
             if (editType == 0) {
                 points[x][y].clicked();
+            } else {
+                points[x][y].type = editType;
+                points[x][y].speed = points[x][y].getMaxSpeed();
             }
             this.repaint();
         }

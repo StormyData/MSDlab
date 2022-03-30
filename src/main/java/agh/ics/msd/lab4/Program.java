@@ -1,4 +1,4 @@
-package agh.ics.msd.lab3;
+package agh.ics.msd.lab4;
 import javax.swing.*;
 
 public class Program extends JFrame {
@@ -12,7 +12,7 @@ public class Program extends JFrame {
 
         gof = new GUI(this);
         gof.initialize(this.getContentPane());
-        this.setSize(1024, 768);
+        this.setSize(Config.SIZE_X, Config.SIZE_Y);
         this.setVisible(true);
     }
 
